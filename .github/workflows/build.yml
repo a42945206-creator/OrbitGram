@@ -23,15 +23,13 @@ jobs:
     - name: Generate Android Project
       run: flutter create . --platforms=android --project-name=orbitgram
 
-    # --- Находим файл build.gradle(.kts) и меняем minSdk на 23 ---
-    - name: Bump minSdkVersion to 23
-      run: |
-        find android/app -maxdepth 1 -name "build.gradle*" -exec sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/' {} \;
-        find android/app -maxdepth 1 -name "build.gradle*" -exec sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/' {} \;
-
-    # --- Создаем файл конфигурации Firebase из секрета ---
+    # --- Создаем файл конфигурации Firebase ---
     - name: Create google-services.json
       run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
+    # --- Генерируем иконки из картинки icon.png ---
+    - name: Generate Launcher Icons
+      run: dart run flutter_launcher_icons
       
     - name: Get dependencies
       run: flutter pub get

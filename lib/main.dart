@@ -11,9 +11,12 @@ class OrbitGramApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'OrbitGram',
+      debugShowCheckedModeBanner: false, // Убирает красную полоску "DEBUG" в углу
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // Делаем цвета более похожими на современные мессенджеры
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2AABEE)),
         useMaterial3: true,
+        scaffoldBackgroundColor: Colors.white,
       ),
       home: const ChatsPage(),
     );
@@ -27,27 +30,78 @@ class ChatsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OrbitGram'),
-        backgroundColor: Colors.deepPurple,
+        title: const Text(
+          'OrbitGram',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+        ),
+        backgroundColor: const Color(0xFF2AABEE), // Синий цвет как в Telegram
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: ListView(
-        children: const [
+        children: [
+          // Красивая карточка чата
           ListTile(
-            leading: CircleAvatar(child: Text('А')),
-            title: Text('Алексей'),
-            subtitle: Text('Привет! Как дела?'),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: const CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.blue,
+              child: Text('A', style: TextStyle(color: Colors.white, fontSize: 20)),
+            ),
+            title: const Text(
+              'Алексей',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            subtitle: const Text(
+              'Привет! Как дела?',
+              style: TextStyle(color: Colors.grey),
+            ),
+            trailing: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('20:04', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                SizedBox(height: 4),
+                Icon(Icons.done_all, color: Colors.blue, size: 16), // Галочки прочитано
+              ],
+            ),
           ),
+          const Divider(height: 1, indent: 80), // Линия-разделитель
           ListTile(
-            leading: CircleAvatar(child: Text('М')),
-            title: Text('Мама'),
-            subtitle: Text('Позвони мне'),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: const CircleAvatar(
+              radius: 28,
+              backgroundColor: Colors.pink,
+              child: Text('М', style: TextStyle(color: Colors.white, fontSize: 20)),
+            ),
+            title: const Text(
+              'Мама',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            subtitle: const Text(
+              'Позвони мне, как освободишься',
+              style: TextStyle(color: Colors.grey),
+            ),
+            trailing: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('18:30', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                SizedBox(height: 4),
+                CircleAvatar(
+                  radius: 10,
+                  backgroundColor: Colors.green,
+                  child: Text('2', style: TextStyle(color: Colors.white, fontSize: 12)),
+                ),
+              ],
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        child: const Icon(Icons.message),
+        backgroundColor: const Color(0xFF2AABEE),
+        child: const Icon(Icons.edit, color: Colors.white), // Иконка "Написать"
       ),
     );
   }

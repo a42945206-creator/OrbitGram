@@ -5,10 +5,23 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
+// --- ИНИЦИАЛИЗАЦИЯ FIREBASE С ЗАЩИТОЙ ---
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();
+  
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    print('Ошибка Firebase: $e');
+    // Ждем 2 секунды и пробуем снова (на случай плохого интернета)
+    await Future.delayed(const Duration(seconds: 2));
+    try {
+      await Firebase.initializeApp();
+    } catch (e2) {
+      print('Повторная ошибка Firebase: $e2');
+    }
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
@@ -35,7 +48,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 }
 
-// --- ГЛАВНЫЙ КЛАСС ---
+// --- ГЛАВНЫЙ КЛАСС ПРИЛОЖЕНИЯ ---
 class OrbitGramApp extends StatelessWidget {
   const OrbitGramApp({super.key});
   @override
@@ -61,6 +74,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
+  
   Future<void> _signInAnonymously() async {
     setState(() => _isLoading = true);
     try {
@@ -135,7 +149,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// --- ЭКРАН ЧАТОВ (С ПОДКЛЮЧЕНИЕМ К FIREBASE) ---
+// --- ЭКРАН ЧАТОВ ---
 class ChatsPage extends StatelessWidget {
   const ChatsPage({super.key});
   @override
@@ -168,7 +182,7 @@ class ChatsPage extends StatelessWidget {
   }
 }
 
-// --- ЭКРАН ЧАТА (FIRESTORE) ---
+// --- ЭКРАН ЧАТА (FIREBASE) ---
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
   @override
@@ -261,12 +275,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// --- ОСТАЛЬНЫЕ ЭКРАНЫ (ЗАГЛУШКИ) ---
+// --- ЗАГЛУШКИ ДЛЯ ОСТАЛЬНЫХ ВКЛАДОК ---
 class CallsPage extends StatelessWidget { const CallsPage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Звонки (в разработке)'))); }
 class ContactsPage extends StatelessWidget { const ContactsPage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Контакты (в разработке)'))); }
 class ProfilePage extends StatelessWidget { const ProfilePage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Профиль (в разработке)'))); }
 
-// --- НАСТРОЙКИ (С РАБОЧИМ ПЕРЕКЛЮЧАТЕЛЕМ ТЕМЫ И ВЫХОДОМ) ---
+// --- НАСТРОЙКИ ---
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
   @override

@@ -11,12 +11,10 @@ class OrbitGramApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'OrbitGram',
-      debugShowCheckedModeBanner: false, // Убирает красную полоску "DEBUG" в углу
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Делаем цвета более похожими на современные мессенджеры
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2AABEE)),
         useMaterial3: true,
-        scaffoldBackgroundColor: Colors.white,
       ),
       home: const ChatsPage(),
     );
@@ -30,78 +28,124 @@ class ChatsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'OrbitGram',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-        ),
-        backgroundColor: const Color(0xFF2AABEE), // Синий цвет как в Telegram
+        title: const Text('OrbitGram', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF2AABEE),
         foregroundColor: Colors.white,
-        elevation: 0,
       ),
       body: ListView(
         children: [
-          // Красивая карточка чата
+          // ЧАТ 1
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: const CircleAvatar(
-              radius: 28,
               backgroundColor: Colors.blue,
-              child: Text('A', style: TextStyle(color: Colors.white, fontSize: 20)),
+              child: Text('A', style: TextStyle(color: Colors.white)),
             ),
-            title: const Text(
-              'Алексей',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            title: const Text('Алексей', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: const Text('Привет! Как дела?'),
+            onTap: () {
+              // Команда перехода на новый экран
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ChatScreen(name: 'Алексей')),
+              );
+            },
+          ),
+          const Divider(),
+          // ЧАТ 2
+          ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.pink,
+              child: Text('М', style: TextStyle(color: Colors.white)),
             ),
-            subtitle: const Text(
-              'Привет! Как дела?',
-              style: TextStyle(color: Colors.grey),
-            ),
-            trailing: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('20:04', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                SizedBox(height: 4),
-                Icon(Icons.done_all, color: Colors.blue, size: 16), // Галочки прочитано
-              ],
+            title: const Text('Мама', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: const Text('Позвони мне'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ChatScreen(name: 'Мама')),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ЭКРАН ПЕРЕПИСКИ
+class ChatScreen extends StatefulWidget {
+  final String name;
+  const ChatScreen({super.key, required this.name});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final List<String> _messages = []; // Здесь храним сообщения
+
+  void _sendMessage() {
+    if (_controller.text.trim().isNotEmpty) {
+      setState(() {
+        _messages.add(_controller.text);
+      });
+      _controller.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.name),
+        backgroundColor: const Color(0xFF2AABEE),
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          // Список сообщений
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                return Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE1FFC7),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(_messages[index], style: const TextStyle(fontSize: 16)),
+                  ),
+                );
+              },
             ),
           ),
-          const Divider(height: 1, indent: 80), // Линия-разделитель
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: const CircleAvatar(
-              radius: 28,
-              backgroundColor: Colors.pink,
-              child: Text('М', style: TextStyle(color: Colors.white, fontSize: 20)),
-            ),
-            title: const Text(
-              'Мама',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-            ),
-            subtitle: const Text(
-              'Позвони мне, как освободишься',
-              style: TextStyle(color: Colors.grey),
-            ),
-            trailing: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
+          // Поле ввода
+          Container(
+            padding: const EdgeInsets.all(8),
+            color: Colors.grey[200],
+            child: Row(
               children: [
-                Text('18:30', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                SizedBox(height: 4),
-                CircleAvatar(
-                  radius: 10,
-                  backgroundColor: Colors.green,
-                  child: Text('2', style: TextStyle(color: Colors.white, fontSize: 12)),
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Сообщение...',
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Color(0xFF2AABEE)),
+                  onPressed: _sendMessage,
                 ),
               ],
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF2AABEE),
-        child: const Icon(Icons.edit, color: Colors.white), // Иконка "Написать"
       ),
     );
   }

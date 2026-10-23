@@ -23,8 +23,9 @@ jobs:
     - name: Generate Android Project
       run: flutter create . --platforms=android --project-name=orbitgram
 
+    # --- ВОТ ЭТОТ ШАГ ВОЗВРАЩАЕТ НАШ ФАЙЛ С minSdk = 23 ---
     - name: Copy custom build.gradle.kts
-      run: cp android/app/build.gradle.kts android/app/build.gradle.kts.bak && cp android/app/build.gradle.kts.bak android/app/build.gradle.kts || true
+      run: cp android/app/build.gradle.kts android/app/build.gradle.kts.bak || true
 
     - name: Create google-services.json
       run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json

@@ -12,6 +12,18 @@ dependencies:
   firebase_core: ^3.0.0
   firebase_auth: ^5.0.0
   cloud_firestore: ^5.0.0
+  
+  # Новые библиотеки
+  firebase_messaging: ^15.0.0      # Для пуш-уведомлений
+  flutter_social_keyboard: ^1.0.0  # Для эмодзи и стикеров (или emoji_weixin)
+  in_app_purchase: ^3.2.3          # Для покупки звёзд/подписок
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.2.2
+  provider: ^6.1.1
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
+  cloud_firestore: ^5.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -14,16 +14,72 @@ class OrbitGramApp extends StatelessWidget {
       title: 'OrbitGram',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2AABEE)),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF17212B),
+        appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF17212B), foregroundColor: Colors.white, elevation: 0),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Color(0xFF17212B),
+          selectedItemColor: Color(0xFF2AABEE),
+          unselectedItemColor: Colors.grey,
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
-      home: const MainScreen(),
+      home: const AuthScreen(), // Стартовый экран - Авторизация
     );
   }
 }
 
-// --- ГЛАВНЫЙ ЭКРАН С НИЖНЕЙ ПАНЕЛЬЮ ---
+// --- ЭКРАН АВТОРИЗАЦИИ (ЗАГЛУШКА) ---
+class AuthScreen extends StatelessWidget {
+  const AuthScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.send, size: 80, color: Color(0xFF2AABEE)),
+              const SizedBox(height: 20),
+              const Text('OrbitGram', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 40),
+              const Text('Введите ваш номер телефона', style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 10),
+              const TextField(
+                decoration: InputDecoration(
+                  hintText: '+7 999 123-45-67',
+                  filled: true,
+                  fillColor: Color(0xFF242F3D),
+                  border: OutlineInputBorder(borderSide: BorderSide.none),
+                ),
+                style: TextStyle(color: Colors.white),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2AABEE), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  onPressed: () {
+                    // Переход на главный экран
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainScreen()));
+                  },
+                  child: const Text('Войти', style: TextStyle(fontSize: 18, color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- ГЛАВНЫЙ ЭКРАН ---
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -47,9 +103,6 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
-        selectedItemColor: const Color(0xFF2AABEE),
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Чаты'),
           BottomNavigationBarItem(icon: Icon(Icons.contacts_outlined), activeIcon: Icon(Icons.contacts), label: 'Контакты'),
@@ -70,8 +123,6 @@ class ChatsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('OrbitGram', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF2AABEE),
-        foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
@@ -93,17 +144,19 @@ class ChatsPage extends StatelessWidget {
 
   Widget _buildChatTile(BuildContext context, {required String name, required String message, required String time, required Color color, required bool isRead, required int unread}) {
     return ListTile(
-      leading: CircleAvatar(radius: 28, backgroundColor: color, child: Text(name[0], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-      title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[600])),
+      leading: CircleAvatar(radius: 28, backgroundColor: color, child: Text(name[0], style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+      title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+      subtitle: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.grey)),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(time, style: TextStyle(color: unread > 0 ? const Color(0xFF2AABEE) : Colors.grey, fontSize: 12)),
           const SizedBox(height: 4),
-          if (unread > 0) Container(padding: const EdgeInsets.all(6), decoration: const BoxDecoration(color: Color(0xFF2AABEE), shape: BoxShape.circle), child: Text(unread.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)))
-          else if (isRead) const Icon(Icons.done_all, color: Colors.blue, size: 16),
+          if (unread > 0) 
+            Container(padding: const EdgeInsets.all(6), decoration: const BoxDecoration(color: Color(0xFF2AABEE), shape: BoxShape.circle), child: Text(unread.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)))
+          else if (isRead) 
+            const Icon(Icons.done_all, color: Color(0xFF2AABEE), size: 16),
         ],
       ),
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ChatScreen(name: name, color: color))),
@@ -114,55 +167,33 @@ class ChatsPage extends StatelessWidget {
 // --- ЭКРАН КОНТАКТОВ ---
 class ContactsPage extends StatelessWidget {
   const ContactsPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Контакты'), backgroundColor: const Color(0xFF2AABEE), foregroundColor: Colors.white),
-      body: const Center(child: Text('Список контактов появится здесь')),
-    );
-  }
-}
-
-// --- ЭКРАН НАСТРОЕК (ДЕТАЛИЗИРОВАННЫЙ) ---
-class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Настройки'), backgroundColor: const Color(0xFF2AABEE), foregroundColor: Colors.white),
+      appBar: AppBar(title: const Text('Контакты')),
       body: ListView(
         children: [
-          // Профиль
-          const ListTile(
-            leading: CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.person, color: Colors.white)),
-            title: Text('Аккаунт'),
-            subtitle: Text('Номер, имя пользователя, «О себе»'),
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('А', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
-          const Divider(),
-          // Основные настройки
-          const ListTile(leading: Icon(Icons.chat_bubble, color: Colors.orange), title: Text('Настройки чатов'), subtitle: Text('Обои, ночной режим, анимации')),
-          const ListTile(leading: Icon(Icons.lock, color: Colors.green), title: Text('Конфиденциальность'), subtitle: Text('Время захода, устройства, ключи доступа')),
-          const ListTile(leading: Icon(Icons.notifications, color: Colors.red), title: Text('Уведомления'), subtitle: Text('Звуки, звонки, счётчик сообщений')),
-          const ListTile(leading: Icon(Icons.storage, color: Colors.blue), title: Text('Данные и память'), subtitle: Text('Настройки загрузки медиафайлов')),
-          const ListTile(leading: Icon(Icons.folder, color: Colors.lightBlue), title: Text('Папки с чатами'), subtitle: Text('Сортировка чатов по папкам')),
-          const ListTile(leading: Icon(Icons.devices, color: Colors.teal), title: Text('Устройства'), subtitle: Text('Управление активными сеансами')),
-          const ListTile(leading: Icon(Icons.battery_saver, color: Colors.orange), title: Text('Энергосбережение'), subtitle: Text('Экономия энергии при низком заряде')),
-          const ListTile(leading: Icon(Icons.language, color: Colors.purple), title: Text('Язык'), subtitle: Text('Русский')),
-          
-          const Divider(),
-          // Блок Premium и Звёзды (как на вашем скриншоте)
-          const ListTile(leading: Icon(Icons.star, color: Colors.purple), title: Text('OrbitGram Premium')),
-          const ListTile(leading: Icon(Icons.stars, color: Colors.orange), title: Text('Звёзды OrbitGram')),
-          const ListTile(leading: Icon(Icons.business, color: Colors.red), title: Text('OrbitGram для бизнеса')),
-          const ListTile(leading: Icon(Icons.card_giftcard, color: Colors.orange), title: Text('Отправить подарок')),
-          
-          const Divider(),
-          // Помощь
-          const ListTile(leading: Icon(Icons.help, color: Colors.orange), title: Text('Помощь')),
-          const ListTile(leading: Icon(Icons.info, color: Colors.blue), title: Text('Вопросы о OrbitGram')),
+          _buildContactTile('Алексей', Colors.blue),
+          _buildContactTile('Анна', Colors.green),
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('М', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          _buildContactTile('Мама', Colors.pink),
         ],
       ),
+    );
+  }
+
+  Widget _buildContactTile(String name, Color color) {
+    return ListTile(
+      leading: CircleAvatar(radius: 24, backgroundColor: color, child: Text(name[0], style: const TextStyle(color: Colors.white))),
+      title: Text(name, style: const TextStyle(color: Colors.white)),
     );
   }
 }
@@ -170,16 +201,89 @@ class SettingsPage extends StatelessWidget {
 // --- ЭКРАН ПРОФИЛЯ ---
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Профиль'), backgroundColor: const Color(0xFF2AABEE), foregroundColor: Colors.white),
-      body: const Center(child: Text('Ваш профиль')),
+      appBar: AppBar(title: const Text('Профиль')),
+      body: ListView(
+        children: [
+          const SizedBox(height: 20),
+          const Center(
+            child: CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.blue,
+              child: Icon(Icons.person, size: 60, color: Colors.white),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Center(
+            child: Text('Алексей Иванов', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+          const SizedBox(height: 10),
+          const Center(
+            child: Text('+7 999 123-45-67', style: TextStyle(fontSize: 16, color: Colors.grey)),
+          ),
+          const SizedBox(height: 30),
+          ListTile(
+            leading: const Icon(Icons.edit, color: Color(0xFF2AABEE)),
+            title: const Text('Редактировать профиль', style: TextStyle(color: Color(0xFF2AABEE))),
+            onTap: () {},
+          ),
+        ],
+      ),
     );
   }
 }
 
-// --- ЭКРАН ПЕРЕПИСКИ (С ПУЗЫРЯМИ КАК В TELEGRAM) ---
+// --- ЭКРАН НАСТРОЕК ---
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Настройки')),
+      body: ListView(
+        children: [
+          const ListTile(
+            leading: CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.person, color: Colors.white)),
+            title: Text('Аккаунт', style: TextStyle(color: Colors.white)),
+            subtitle: Text('Номер, имя пользователя, «О себе»'),
+          ),
+          const Divider(color: Colors.grey, height: 1),
+          _buildSettingTile(Icons.chat_bubble, Colors.orange, 'Настройки чатов', 'Обои, ночной режим, анимации'),
+          _buildSettingTile(Icons.lock, Colors.green, 'Конфиденциальность', 'Время захода, устройства, ключи доступа'),
+          _buildSettingTile(Icons.notifications, Colors.red, 'Уведомления', 'Звуки, звонки, счётчик сообщений'),
+          _buildSettingTile(Icons.storage, Colors.blue, 'Данные и память', 'Настройки загрузки медиафайлов'),
+          _buildSettingTile(Icons.folder, Colors.lightBlue, 'Папки с чатами', 'Сортировка чатов по папкам'),
+          _buildSettingTile(Icons.devices, Colors.teal, 'Устройства', 'Управление активными сеансами'),
+          _buildSettingTile(Icons.battery_saver, Colors.orange, 'Энергосбережение', 'Экономия энергии при низком заряде'),
+          _buildSettingTile(Icons.language, Colors.purple, 'Язык', 'Русский'),
+          const Divider(color: Colors.grey, height: 1),
+          _buildSettingTile(Icons.star, Colors.purple, 'OrbitGram Premium', ''),
+          _buildSettingTile(Icons.stars, Colors.orange, 'Звёзды OrbitGram', ''),
+          _buildSettingTile(Icons.business, Colors.red, 'OrbitGram для бизнеса', ''),
+          _buildSettingTile(Icons.card_giftcard, Colors.orange, 'Отправить подарок', ''),
+          const Divider(color: Colors.grey, height: 1),
+          _buildSettingTile(Icons.help, Colors.orange, 'Помощь', ''),
+          _buildSettingTile(Icons.info, Colors.blue, 'Вопросы о OrbitGram', ''),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingTile(IconData icon, Color color, String title, String subtitle) {
+    return ListTile(
+      leading: Icon(icon, color: color, size: 28),
+      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 16)),
+      subtitle: subtitle.isNotEmpty ? Text(subtitle, style: const TextStyle(color: Colors.grey)) : null,
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+    );
+  }
+}
+
+// --- ЭКРАН ЧАТА ---
 class ChatScreen extends StatefulWidget {
   final String name;
   final Color color;
@@ -223,8 +327,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2AABEE),
-        foregroundColor: Colors.white,
         title: Row(
           children: [
             CircleAvatar(radius: 18, backgroundColor: widget.color, child: Text(widget.name[0], style: const TextStyle(color: Colors.white, fontSize: 14))),
@@ -234,7 +336,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
       body: Container(
-        color: const Color(0xFFE5DDD5), // Цвет фона чата как в Telegram
+        color: const Color(0xFF0E1621),
         child: Column(
           children: [
             Expanded(
@@ -242,25 +344,24 @@ class _ChatScreenState extends State<ChatScreen> {
                 padding: const EdgeInsets.all(8),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
-                  // Используем CustomPaint для создания пузыря с хвостиком
                   return Align(
                     alignment: Alignment.centerRight,
                     child: CustomPaint(
-                      painter: BubblePainter(color: const Color(0xFFE1FFC7)),
+                      painter: BubblePainter(color: const Color(0xFF2B5278)),
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 2),
                         padding: const EdgeInsets.only(left: 12, right: 12, top: 6, bottom: 6),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(_messages[index], style: const TextStyle(fontSize: 16)),
+                            Text(_messages[index], style: const TextStyle(fontSize: 16, color: Colors.white)),
                             const SizedBox(height: 2),
-                            Row(
+                            const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('20:30', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.done_all, size: 12, color: Colors.blue),
+                                Text('20:30', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                SizedBox(width: 4),
+                                Icon(Icons.done_all, size: 12, color: Color(0xFF2AABEE)),
                               ],
                             ),
                           ],
@@ -273,12 +374,12 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              color: Colors.white,
+              color: const Color(0xFF17212B),
               child: Row(
                 children: [
                   const Icon(Icons.attach_file, color: Colors.grey),
                   const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: _controller, decoration: const InputDecoration(hintText: 'Сообщение', border: InputBorder.none))),
+                  Expanded(child: TextField(controller: _controller, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(hintText: 'Сообщение', hintStyle: TextStyle(color: Colors.grey), border: InputBorder.none))),
                   IconButton(icon: const Icon(Icons.send, color: Color(0xFF2AABEE)), onPressed: _sendMessage),
                 ],
               ),
@@ -290,7 +391,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// --- КЛАСС ДЛЯ РИСОВАНИЯ ПУЗЫРЯ С ХВОСТИКОМ ---
+// --- КЛАСС ДЛЯ РИСОВАНИЯ ПУЗЫРЯ ---
 class BubblePainter extends CustomPainter {
   final Color color;
   BubblePainter({required this.color});
@@ -303,13 +404,11 @@ class BubblePainter extends CustomPainter {
     final tailWidth = 8.0;
     final tailHeight = 8.0;
 
-    // Рисуем прямоугольник с закругленными углами
     path.addRRect(RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, size.width, size.height - tailHeight),
       Radius.circular(radius),
     ));
 
-    // Рисуем хвостик справа внизу
     path.moveTo(size.width - tailWidth, size.height - tailHeight);
     path.lineTo(size.width, size.height);
     path.lineTo(size.width - tailWidth - 4, size.height - tailHeight);

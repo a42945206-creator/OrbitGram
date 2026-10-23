@@ -12,7 +12,7 @@ Future<void> main() async {
   try {
     await Firebase.initializeApp(
       options: const FirebaseOptions(
-        apiKey: "AIzaSyCD7VrCzpQoemrxZjM_G-GhOTKff_MaGY",
+        apiKey: "AIzaSyCD7VrCzpOqoemrxZjM_G-GhOTKff_MaGY", // Исправлена буква O
         appId: "1:644523161146:android:625ffa87768fae311b2703",
         messagingSenderId: "644523161146",
         projectId: "orbitgram-18ed4",

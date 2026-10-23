@@ -14,7 +14,7 @@ dependencies:
   firebase_auth: ^5.0.0
   cloud_firestore: ^5.0.0
   firebase_messaging: ^15.0.0
-  flutter_social_keyboard: ^1.0.0
+  flutter_social_keyboard: ^0.0.2
   in_app_purchase: ^3.2.3
 
 dev_dependencies:

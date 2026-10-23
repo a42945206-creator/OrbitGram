@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const OrbitGramApp());
@@ -34,7 +35,6 @@ class ChatsPage extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          // ЧАТ 1
           ListTile(
             leading: const CircleAvatar(
               backgroundColor: Colors.blue,
@@ -43,14 +43,12 @@ class ChatsPage extends StatelessWidget {
             title: const Text('Алексей', style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: const Text('Привет! Как дела?'),
             onTap: () {
-              // Команда перехода на новый экран
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const ChatScreen(name: 'Алексей')),
               );
             },
           ),
           const Divider(),
-          // ЧАТ 2
           ListTile(
             leading: const CircleAvatar(
               backgroundColor: Colors.pink,
@@ -70,7 +68,6 @@ class ChatsPage extends StatelessWidget {
   }
 }
 
-// ЭКРАН ПЕРЕПИСКИ
 class ChatScreen extends StatefulWidget {
   final String name;
   const ChatScreen({super.key, required this.name});
@@ -81,13 +78,36 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
-  final List<String> _messages = []; // Здесь храним сообщения
+  List<String> _messages = [];
+  
+  // Уникальный ключ для каждого чата
+  late String _chatKey; 
+
+  @override
+  void initState() {
+    super.initState();
+    _chatKey = 'chat_${widget.name}';
+    _loadMessages(); // Загружаем сообщения при открытии
+  }
+
+  Future<void> _loadMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _messages = prefs.getStringList(_chatKey) ?? [];
+    });
+  }
+
+  Future<void> _saveMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_chatKey, _messages);
+  }
 
   void _sendMessage() {
     if (_controller.text.trim().isNotEmpty) {
       setState(() {
         _messages.add(_controller.text);
       });
+      _saveMessages(); // Сохраняем после добавления
       _controller.clear();
     }
   }
@@ -102,7 +122,6 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Column(
         children: [
-          // Список сообщений
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
@@ -123,7 +142,6 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          // Поле ввода
           Container(
             padding: const EdgeInsets.all(8),
             color: Colors.grey[200],

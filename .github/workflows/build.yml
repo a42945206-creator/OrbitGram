@@ -23,10 +23,6 @@ jobs:
     - name: Generate Android Project
       run: flutter create . --platforms=android --project-name=orbitgram
 
-    # --- Поднимаем минимальную версию Android до 23 (исправлено на .kts) ---
-    - name: Bump minSdkVersion to 23
-      run: sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/' android/app/build.gradle.kts
-
     # --- Создаем файл конфигурации Firebase из секрета ---
     - name: Create google-services.json
       run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
@@ -34,8 +30,9 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
       
+    # --- Собираем APK, принудительно задавая minSdkVersion через Gradle ---
     - name: Build APK
-      run: flutter build apk --release
+      run: flutter build apk --release -Pflutter.minSdkVersion=23
       
     - name: Upload APK
       uses: actions/upload-artifact@v4

@@ -5,21 +5,22 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// --- ИНИЦИАЛИЗАЦИЯ FIREBASE С ЗАЩИТОЙ ---
+// --- ИНИЦИАЛИЗАЦИЯ FIREBASE С ЯВНЫМИ НАСТРОЙКАМИ ---
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    await Firebase.initializeApp();
+    // Явно передаем настройки, чтобы не зависеть от файла google-services.json
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyDummyKeyForTesting1234567890", // ВАЖНО: Замените этот ключ!
+        appId: "1:123456789012:android:abcdef1234567890",
+        messagingSenderId: "123456789012",
+        projectId: "orbitgram", // Ваш project_id из Firebase
+      ),
+    );
   } catch (e) {
     print('Ошибка Firebase: $e');
-    // Ждем 2 секунды и пробуем снова (на случай плохого интернета)
-    await Future.delayed(const Duration(seconds: 2));
-    try {
-      await Firebase.initializeApp();
-    } catch (e2) {
-      print('Повторная ошибка Firebase: $e2');
-    }
   }
 
   runApp(
@@ -30,7 +31,7 @@ Future<void> main() async {
   );
 }
 
-// --- УПРАВЛЕНИЕ ТЕМОЙ ---
+// --- ОСТАЛЬНОЙ КОД (ТЕМА, ЭКРАНЫ, ЧАТ) ---
 class ThemeProvider extends ChangeNotifier {
   bool _isDark = true;
   bool get isDark => _isDark;
@@ -48,7 +49,6 @@ class ThemeProvider extends ChangeNotifier {
   }
 }
 
-// --- ГЛАВНЫЙ КЛАСС ПРИЛОЖЕНИЯ ---
 class OrbitGramApp extends StatelessWidget {
   const OrbitGramApp({super.key});
   @override
@@ -65,7 +65,6 @@ class OrbitGramApp extends StatelessWidget {
   }
 }
 
-// --- ЭКРАН АВТОРИЗАЦИИ ---
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
   @override
@@ -74,7 +73,6 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
-  
   Future<void> _signInAnonymously() async {
     setState(() => _isLoading = true);
     try {
@@ -113,7 +111,6 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 }
 
-// --- ГЛАВНЫЙ ЭКРАН С 5 ВКЛАДКАМИ ---
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
   @override
@@ -122,13 +119,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  final List<Widget> _screens = [
-    const ChatsPage(),
-    const CallsPage(),
-    const ContactsPage(),
-    const SettingsPage(),
-    const ProfilePage(),
-  ];
+  final List<Widget> _screens = [const ChatsPage(), const CallsPage(), const ContactsPage(), const SettingsPage(), const ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
@@ -138,51 +129,37 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), activeIcon: Icon(Icons.chat_bubble), label: 'Чаты'),
-          BottomNavigationBarItem(icon: Icon(Icons.call_outlined), activeIcon: Icon(Icons.call), label: 'Звонки'),
-          BottomNavigationBarItem(icon: Icon(Icons.contacts_outlined), activeIcon: Icon(Icons.contacts), label: 'Контакты'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings), label: 'Настройки'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Профиль'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Чаты'),
+          BottomNavigationBarItem(icon: Icon(Icons.call_outlined), label: 'Звонки'),
+          BottomNavigationBarItem(icon: Icon(Icons.contacts_outlined), label: 'Контакты'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Настройки'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Профиль'),
         ],
       ),
     );
   }
 }
 
-// --- ЭКРАН ЧАТОВ ---
 class ChatsPage extends StatelessWidget {
   const ChatsPage({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('OrbitGram', style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
-        ],
-      ),
+      appBar: AppBar(title: const Text('OrbitGram')),
       body: ListView(
         children: [
           ListTile(
-            leading: const CircleAvatar(backgroundColor: Color(0xFF2AABEE), child: Text('O', style: TextStyle(color: Colors.white))),
+            leading: const CircleAvatar(backgroundColor: Color(0xFF2AABEE), child: Icon(Icons.public, color: Colors.white)),
             title: const Text('Общий чат'),
             subtitle: const Text('Нажми, чтобы проверить связь'),
-            trailing: const Icon(Icons.done_all, color: Color(0xFF2AABEE), size: 16),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChatScreen())),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF2AABEE),
-        child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
   }
 }
 
-// --- ЭКРАН ЧАТА (FIREBASE) ---
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
   @override
@@ -207,80 +184,53 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Row(
-          children: [
-            CircleAvatar(radius: 18, backgroundColor: Colors.blue, child: Text('O', style: TextStyle(color: Colors.white, fontSize: 14))),
-            SizedBox(width: 12),
-            Text('Общий чат'),
-          ],
-        ),
-      ),
-      body: Container(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0E1621) : const Color(0xFFE5DDD5),
-        child: Column(
-          children: [
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _messagesRef.orderBy('timestamp', descending: false).snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                  final messages = snapshot.data!.docs;
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(8),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = messages[index].data() as Map<String, dynamic>;
-                      final isMe = msg['senderId'] == FirebaseAuth.instance.currentUser?.uid;
-                      return Align(
-                        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 2),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isMe 
-                                ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2B5278) : const Color(0xFFE1FFC7))
-                                : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF182533) : Colors.white),
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(12),
-                              topRight: const Radius.circular(12),
-                              bottomLeft: Radius.circular(isMe ? 12 : 4),
-                              bottomRight: Radius.circular(isMe ? 4 : 12),
-                            ),
-                          ),
-                          child: Text(msg['text'] ?? '', style: TextStyle(color: isMe && Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black)),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+      appBar: AppBar(title: const Text('Общий чат')),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _messagesRef.orderBy('timestamp', descending: false).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                final messages = snapshot.data!.docs;
+                return ListView.builder(
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final msg = messages[index].data() as Map<String, dynamic>;
+                    final isMe = msg['senderId'] == FirebaseAuth.instance.currentUser?.uid;
+                    return Align(
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: isMe ? const Color(0xFF2B5278) : Colors.grey[800], borderRadius: BorderRadius.circular(10)),
+                        child: Text(msg['text'] ?? '', style: const TextStyle(color: Colors.white)),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              color: Theme.of(context).cardColor,
-              child: Row(
-                children: [
-                  const Icon(Icons.attach_file, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Expanded(child: TextField(controller: _controller, decoration: const InputDecoration(hintText: 'Сообщение', border: InputBorder.none))),
-                  IconButton(icon: const Icon(Icons.send, color: Color(0xFF2AABEE)), onPressed: _sendMessage),
-                ],
-              ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(8),
+            color: Theme.of(context).cardColor,
+            child: Row(
+              children: [
+                Expanded(child: TextField(controller: _controller, decoration: const InputDecoration(hintText: 'Сообщение'))),
+                IconButton(icon: const Icon(Icons.send, color: Color(0xFF2AABEE)), onPressed: _sendMessage),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// --- ЗАГЛУШКИ ДЛЯ ОСТАЛЬНЫХ ВКЛАДОК ---
-class CallsPage extends StatelessWidget { const CallsPage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Звонки (в разработке)'))); }
-class ContactsPage extends StatelessWidget { const ContactsPage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Контакты (в разработке)'))); }
-class ProfilePage extends StatelessWidget { const ProfilePage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Профиль (в разработке)'))); }
-
-// --- НАСТРОЙКИ ---
+class CallsPage extends StatelessWidget { const CallsPage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Звонки'))); }
+class ContactsPage extends StatelessWidget { const ContactsPage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Контакты'))); }
+class ProfilePage extends StatelessWidget { const ProfilePage({super.key}); @override Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('Профиль'))); }
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
   @override
@@ -290,20 +240,8 @@ class SettingsPage extends StatelessWidget {
       appBar: AppBar(title: const Text('Настройки')),
       body: ListView(
         children: [
-          SwitchListTile(
-            title: const Text('Темная тема'),
-            value: themeProvider.isDark,
-            onChanged: (value) => themeProvider.toggleTheme(),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.exit_to_app, color: Colors.red),
-            title: const Text('Выйти', style: TextStyle(color: Colors.red)),
-            onTap: () async {
-              await FirebaseAuth.instance.signOut();
-              if (context.mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
-            },
-          ),
+          SwitchListTile(title: const Text('Темная тема'), value: themeProvider.isDark, onChanged: (v) => themeProvider.toggleTheme()),
+          ListTile(title: const Text('Выйти'), onTap: () async { await FirebaseAuth.instance.signOut(); if (context.mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen())); }),
         ],
       ),
     );

@@ -21,7 +21,7 @@ jobs:
         channel: 'stable'
         
     - name: Generate Android Project
-      run: flutter create . --platforms=android
+      run: flutter create . --platforms=android --project-name=orbitgram
       
     - name: Get dependencies
       run: flutter pub get

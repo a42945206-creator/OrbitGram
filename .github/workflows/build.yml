@@ -24,8 +24,8 @@ jobs:
     - name: Generate Android Project
       run: flutter create . --platforms=android --project-name=orbitgram
 
-    # --- Создаем файл build.gradle.kts с minSdk = 23 ПРЯМО ВО ВРЕМЯ СБОРКИ ---
-    - name: Create custom build.gradle.kts
+    # --- ПРИНУДИТЕЛЬНО ПЕРЕЗАПИСЫВАЕМ ФАЙЛ ПРАВИЛЬНЫМИ НАСТРОЙКАМИ ---
+    - name: Overwrite build.gradle.kts
       run: |
         cat > android/app/build.gradle.kts << 'EOF'
         plugins {

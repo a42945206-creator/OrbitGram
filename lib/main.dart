@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 // --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
 Future<void> main() async {
@@ -254,13 +255,22 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (context, index) {
                     final msg = messages[index].data() as Map<String, dynamic>;
                     final isMe = msg['senderId'] == FirebaseAuth.instance.currentUser?.uid;
+                    final timestamp = msg['timestamp'] as Timestamp?;
+                    final timeStr = timestamp != null ? DateFormat.Hm().format(timestamp.toDate()) : '';
                     return Align(
                       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.all(4),
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(color: isMe ? const Color(0xFF2B5278) : Colors.grey[800], borderRadius: BorderRadius.circular(10)),
-                        child: Text(msg['text'] ?? '', style: const TextStyle(color: Colors.white)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(msg['text'] ?? '', style: const TextStyle(color: Colors.white)),
+                            const SizedBox(height: 2),
+                            Text(timeStr, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -306,28 +316,35 @@ class SettingsPage extends StatelessWidget {
               return ListTile(
                 leading: CircleAvatar(radius: 30, backgroundColor: const Color(0xFF2AABEE), child: Text(name.isNotEmpty ? name[0] : '?', style: const TextStyle(color: Colors.white, fontSize: 24))),
                 title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                subtitle: const Text('Номер, имя пользователя, «О себе»'),
+                trailing: const Icon(Icons.chevron_right),
               );
             },
           ),
           const Divider(),
-          SwitchListTile(
-            secondary: const Icon(Icons.dark_mode, color: Colors.purple),
-            title: const Text('Темная тема'),
-            value: themeProvider.isDark,
-            onChanged: (value) => themeProvider.toggleTheme(),
-          ),
-          const Divider(),
           
-          // Блок Звёзд
-          ListTile(
-            leading: const Icon(Icons.stars, color: Colors.orange, size: 28),
-            title: const Text('Orbit Stars', style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: const Text('Магазин звёзд'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const StarsShopScreen())),
-          ),
+          _buildTile(context, Icons.chat_bubble, Colors.orange, 'Настройки чатов', 'Обои, ночной режим, анимации'),
+          _buildTile(context, Icons.lock, Colors.green, 'Конфиденциальность', 'Время захода, устройства, ключи доступа'),
+          _buildTile(context, Icons.notifications, Colors.red, 'Уведомления', 'Звуки, звонки, счётчик сообщений'),
+          _buildTile(context, Icons.storage, Colors.blue, 'Данные и память', 'Настройки загрузки медиафайлов'),
+          _buildTile(context, Icons.folder, Colors.lightBlue, 'Папки с чатами', 'Сортировка чатов по папкам'),
+          _buildTile(context, Icons.devices, Colors.teal, 'Устройства', 'Управление активными сеансами'),
+          _buildTile(context, Icons.battery_saver, Colors.orange, 'Энергосбережение', 'Экономия энергии при низком заряде'),
+          _buildTile(context, Icons.language, Colors.purple, 'Язык', 'Русский'),
           
           const Divider(),
+          
+          _buildTile(context, Icons.star, Colors.purple, 'OrbitGram Premium', 'Подписка и эксклюзивные функции'),
+          _buildTile(context, Icons.stars, Colors.orange, 'Orbit Stars', 'Магазин звёзд и покупки'),
+          _buildTile(context, Icons.card_giftcard, Colors.pink, 'Отправить подарок', 'Порадуйте друга'),
+          
+          const Divider(),
+          
+          _buildTile(context, Icons.help, Colors.orange, 'Помощь', 'Вопросы и ответы'),
+          _buildTile(context, Icons.info, Colors.blue, 'Вопросы о OrbitGram', 'Версия приложения'),
+          
+          const Divider(),
+          
           ListTile(
             leading: const Icon(Icons.exit_to_app, color: Colors.red),
             title: const Text('Выйти', style: TextStyle(color: Colors.red)),
@@ -340,92 +357,16 @@ class SettingsPage extends StatelessWidget {
       ),
     );
   }
-}
 
-// --- МАГАЗИН ЗВЁЗД ---
-class StarsShopScreen extends StatelessWidget {
-  const StarsShopScreen({super.key});
-
-  List<Map<String, dynamic>> _generatePackages() {
-    List<Map<String, dynamic>> packages = [];
-    int stars = 100;
-    int price = 15;
-    
-    while (stars <= 1000000) {
-      packages.add({
-        'stars': stars,
-        'price': price,
-        'label': '$stars - $price ₽',
-      });
-      stars += 1000; 
-      price += 5;    
-    }
-    return packages;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final packages = _generatePackages();
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Orbit Stars')),
-      body: ListView.builder(
-        itemCount: packages.length,
-        itemBuilder: (context, index) {
-          final pkg = packages[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: ListTile(
-              leading: const Icon(Icons.star, color: Colors.amber, size: 36),
-              title: Text('${pkg['stars']} звёзд', style: const TextStyle(fontWeight: FontWeight.bold)),
-              trailing: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2AABEE)),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Оплата звёзд'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Вы покупаете: ${pkg['stars']} звёзд', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 10),
-                          Text('Сумма к оплате: ${pkg['price']} ₽', style: const TextStyle(fontSize: 16)),
-                          const Divider(height: 30),
-                          const Text('Реквизиты для перевода:', style: TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 10),
-                          const Text('📞 Номер: +7 978 474 52 38'), // ВАШ НОМЕР
-                          const Text('🏦 Банк: Т-Банк (Тинькофф)'),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'После перевода отправьте чек в поддержку, и звёзды будут зачислены на ваш баланс.',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Закрыть'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Заявка отправлена! Ожидайте зачисления.')));
-                          },
-                          child: const Text('Я оплатил'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                child: Text('${pkg['price']} ₽', style: const TextStyle(color: Colors.white)),
-              ),
-            ),
-          );
-        },
-      ),
+  Widget _buildTile(BuildContext context, IconData icon, Color color, String title, String subtitle) {
+    return ListTile(
+      leading: Icon(icon, color: color, size: 28),
+      title: Text(title, style: const TextStyle(fontSize: 16)),
+      subtitle: Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Раздел "$title" в разработке')));
+      },
     );
   }
 }

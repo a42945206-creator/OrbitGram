@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 // --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
@@ -80,6 +83,7 @@ class _AuthScreenState extends State<AuthScreen> {
       await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
         'name': _nameController.text.trim(),
         'uid': userCredential.user!.uid,
+        'photoUrl': '',
       });
       if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainScreen()));
     } catch (e) {
@@ -194,8 +198,11 @@ class ContactsPage extends StatelessWidget {
             itemCount: users.length,
             itemBuilder: (context, index) {
               final user = users[index].data() as Map<String, dynamic>;
+              final photoUrl = user['photoUrl'] ?? '';
               return ListTile(
-                leading: CircleAvatar(child: Text(user['name'][0])),
+                leading: photoUrl.isNotEmpty 
+                  ? CircleAvatar(backgroundImage: NetworkImage(photoUrl)) 
+                  : CircleAvatar(child: Text(user['name'][0])),
                 title: Text(user['name']),
                 onTap: () async {
                   final chatId = currentUser!.uid.compareTo(users[index].id) < 0 
@@ -216,7 +223,7 @@ class ContactsPage extends StatelessWidget {
   }
 }
 
-// --- ЭКРАН ЧАТА ---
+// --- ЭКРАН ЧАТА (КРАСИВЫЙ) ---
 class ChatScreen extends StatefulWidget {
   final String chatId;
   const ChatScreen({super.key, required this.chatId});
@@ -241,62 +248,189 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Чат')),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').orderBy('timestamp', descending: false).snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final messages = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index].data() as Map<String, dynamic>;
-                    final isMe = msg['senderId'] == FirebaseAuth.instance.currentUser?.uid;
-                    final timestamp = msg['timestamp'] as Timestamp?;
-                    final timeStr = timestamp != null ? DateFormat.Hm().format(timestamp.toDate()) : '';
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.all(4),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: isMe ? const Color(0xFF2B5278) : Colors.grey[800], borderRadius: BorderRadius.circular(10)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(msg['text'] ?? '', style: const TextStyle(color: Colors.white)),
-                            const SizedBox(height: 2),
-                            Text(timeStr, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                          ],
+      appBar: AppBar(
+        title: const Text('Чат'),
+        elevation: 0,
+      ),
+      body: Container(
+        // Красивый фон чата как в Telegram
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark 
+              ? const Color(0xFF0E1621) 
+              : const Color(0xFFE5DDD5),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('chats').doc(widget.chatId).collection('messages').orderBy('timestamp', descending: false).snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final messages = snapshot.data!.docs;
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(8),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = messages[index].data() as Map<String, dynamic>;
+                      final isMe = msg['senderId'] == FirebaseAuth.instance.currentUser?.uid;
+                      final timestamp = msg['timestamp'] as Timestamp?;
+                      final timeStr = timestamp != null ? DateFormat.Hm().format(timestamp.toDate()) : '';
+                      
+                      return AnimatedAlign(
+                        duration: const Duration(milliseconds: 300),
+                        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        child: CustomPaint(
+                          painter: BubblePainter(
+                            color: isMe 
+                              ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2B5278) : const Color(0xFFE1FFC7)) 
+                              : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF182533) : Colors.white),
+                          ),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 8),
+                            child: Column(
+                              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  msg['text'] ?? '', 
+                                  style: TextStyle(
+                                    color: isMe && Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(timeStr, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                    if (isMe) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.done_all, size: 12, color: Color(0xFF2AABEE)),
+                                    ]
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              color: Theme.of(context).cardColor,
+              child: Row(
+                children: [
+                  const Icon(Icons.attach_file, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        hintText: 'Сообщение',
+                        hintStyle: const TextStyle(color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF242F3D) : Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
-                    );
-                  },
-                );
-              },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  CircleAvatar(
+                    backgroundColor: const Color(0xFF2AABEE),
+                    child: IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                      onPressed: _sendMessage,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            color: Theme.of(context).cardColor,
-            child: Row(
-              children: [
-                Expanded(child: TextField(controller: _controller, decoration: const InputDecoration(hintText: 'Сообщение'))),
-                IconButton(icon: const Icon(Icons.send, color: Color(0xFF2AABEE)), onPressed: _sendMessage),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
+// --- КЛАСС ДЛЯ РИСОВАНИЯ ПУЗЫРЯ С ХВОСТИКОМ ---
+class BubblePainter extends CustomPainter {
+  final Color color;
+  BubblePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path();
+    final radius = 12.0;
+    final tailWidth = 8.0;
+    final tailHeight = 8.0;
+
+    path.addRRect(RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height - tailHeight),
+      Radius.circular(radius),
+    ));
+
+    path.moveTo(size.width - tailWidth, size.height - tailHeight);
+    path.lineTo(size.width, size.height);
+    path.lineTo(size.width - tailWidth - 4, size.height - tailHeight);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 // --- НАСТРОЙКИ ---
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _isUploading = false;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (pickedFile != null) {
+      setState(() => _isUploading = true);
+      try {
+        File file = File(pickedFile.path);
+        String fileName = '${FirebaseAuth.instance.currentUser!.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        
+        Reference ref = FirebaseStorage.instance.ref().child('user_photos').child(fileName);
+        await ref.putFile(file);
+        String downloadUrl = await ref.getDownloadURL();
+        
+        await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).update({
+          'photoUrl': downloadUrl,
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Фото профиля обновлено!')));
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ошибка загрузки: $e')));
+        }
+      } finally {
+        if (mounted) setState(() => _isUploading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -310,14 +444,24 @@ class SettingsPage extends StatelessWidget {
             stream: FirebaseFirestore.instance.collection('users').doc(currentUser?.uid).snapshots(),
             builder: (context, snapshot) {
               String name = 'Загрузка...';
+              String photoUrl = '';
               if (snapshot.hasData && snapshot.data!.exists) {
-                name = (snapshot.data!.data() as Map<String, dynamic>)['name'] ?? 'Без имени';
+                final data = snapshot.data!.data() as Map<String, dynamic>;
+                name = data['name'] ?? 'Без имени';
+                photoUrl = data['photoUrl'] ?? '';
               }
               return ListTile(
-                leading: CircleAvatar(radius: 30, backgroundColor: const Color(0xFF2AABEE), child: Text(name.isNotEmpty ? name[0] : '?', style: const TextStyle(color: Colors.white, fontSize: 24))),
+                leading: _isUploading 
+                  ? const CircleAvatar(child: CircularProgressIndicator())
+                  : GestureDetector(
+                      onTap: _pickImage,
+                      child: photoUrl.isNotEmpty 
+                        ? CircleAvatar(radius: 30, backgroundImage: NetworkImage(photoUrl))
+                        : CircleAvatar(radius: 30, backgroundColor: const Color(0xFF2AABEE), child: Text(name.isNotEmpty ? name[0] : '?', style: const TextStyle(color: Colors.white, fontSize: 24))),
+                    ),
                 title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                subtitle: const Text('Номер, имя пользователя, «О себе»'),
-                trailing: const Icon(Icons.chevron_right),
+                subtitle: const Text('Нажмите на аватарку, чтобы сменить фото'),
+                trailing: const Icon(Icons.camera_alt, color: Colors.grey),
               );
             },
           ),

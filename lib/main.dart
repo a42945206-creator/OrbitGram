@@ -253,7 +253,6 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
       ),
       body: Container(
-        // Красивый фон чата как в Telegram
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.dark 
               ? const Color(0xFF0E1621) 
@@ -410,6 +409,7 @@ class _SettingsPageState extends State<SettingsPage> {
         File file = File(pickedFile.path);
         String fileName = '${FirebaseAuth.instance.currentUser!.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
         
+        // ИСПРАВЛЕНО: используем правильный тип Reference из новой версии
         Reference ref = FirebaseStorage.instance.ref().child('user_photos').child(fileName);
         await ref.putFile(file);
         String downloadUrl = await ref.getDownloadURL();
